@@ -1,0 +1,4 @@
+aiogram>=3.30
+requests>=2.31
+cryptography>=42
+pynacl>=1.5
