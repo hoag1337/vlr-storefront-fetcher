@@ -146,17 +146,20 @@
   <!-- Step 1 -->
   <section class="card">
     <h2 class="step-head"><span class="step-num">1</span>Sign in to Riot</h2>
-    <p>Open the Riot sign-in page and log in with your Valorant account.</p>
-    <a class="btn" href="https://auth.riotgames.com/login" target="_blank" rel="noopener">
-      Open Riot sign-in ↗</a>
-    <p class="muted" style="margin-top:10px">Keep that tab open and come back here.</p>
+    <p>Open the official Valorant sign-in page and log in with your account.</p>
+    <a class="btn" href="https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&amp;client_id=play-valorant-web-prod&amp;response_type=token%20id_token&amp;nonce=1&amp;scope=account%20openid" target="_blank" rel="noopener">
+      Open Valorant sign-in ↗</a>
+    <p class="muted" style="margin-top:10px">After you sign in you'll land on a
+      Valorant page — that's how you know it worked. Keep that tab open and come
+      back here.</p>
   </section>
 
   <!-- Step 2 -->
   <section class="card">
     <h2 class="step-head"><span class="step-num">2</span>Copy your session value</h2>
     <p>Pick your browser and follow the steps to copy one value called
-      <code class="inline">ssid</code>.</p>
+      <code class="inline">ssid</code>. You'll see several Riot sites in the
+      cookie list — always choose <b>auth.riotgames.com</b>.</p>
     <div class="tabs" role="tablist" aria-label="Browser">
       <button class="tab" role="tab" aria-selected="true" data-tab="chrome">Chrome / Edge</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="firefox">Firefox</button>
