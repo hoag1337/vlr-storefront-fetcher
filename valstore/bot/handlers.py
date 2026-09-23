@@ -16,7 +16,7 @@ from aiogram.types import CallbackQuery, Message
 
 from valstore.bot import keyboards as kb
 from valstore.bot import texts
-from valstore.bot.keyboards import AccountCB, LinkCB
+from valstore.bot.keyboards import AccountCB, LinkCB, WishlistCB
 from valstore.errors import (
     AccountLimitReached,
     AccountNotFound,
@@ -27,6 +27,7 @@ from valstore.errors import (
     ReauthError,
     SessionDecryptError,
     ValstoreError,
+    WishlistLimitReached,
 )
 
 log = logging.getLogger("valstore.bot.handlers")
@@ -40,6 +41,10 @@ class LinkFlow(StatesGroup):
 
 class RenameFlow(StatesGroup):
     waiting_for_name = State()
+
+
+class WishlistFlow(StatesGroup):
+    waiting_for_search = State()
 
 
 # ---- shared helpers ----
@@ -75,6 +80,8 @@ def explain(exc: Exception) -> str:
         return texts.ERR_NO_SUCH_ACCOUNT
     if isinstance(exc, AccountLimitReached):
         return str(exc)
+    if isinstance(exc, WishlistLimitReached):
+        return str(exc)
     if isinstance(exc, LinkError):
         return str(exc)
     return texts.ERR_UNEXPECTED
@@ -89,6 +96,16 @@ def accounts_panel(accounts_service, telegram_id):
     return header, kb.accounts_list(
         accounts, at_capacity=accounts_service.at_capacity(telegram_id)
     )
+
+
+def wishlist_panel(wishlist_service, telegram_id):
+    """(text, keyboard) for the wishlist screen."""
+    entries = wishlist_service.list_items(telegram_id)
+    at_capacity = wishlist_service.at_capacity(telegram_id)
+    if not entries:
+        return texts.NO_WISHLIST_ITEMS, kb.wishlist_panel(entries, at_capacity)
+    header = texts.WISHLIST_HEADER.format(count=len(entries))
+    return header, kb.wishlist_panel(entries, at_capacity)
 
 
 def detail_panel(account):
@@ -277,6 +294,15 @@ async def cmd_inventory(message: Message, accounts, executor, inventory_command)
         return
     await _dispatch_command(message, telegram_id, accounts, executor,
                             inventory_command, "inv")
+
+
+@router.message(Command("wishlist"))
+async def cmd_wishlist(message: Message, wishlist):
+    telegram_id = _uid(message)
+    if telegram_id is None:
+        return
+    text, markup = wishlist_panel(wishlist, telegram_id)
+    await message.answer(text, reply_markup=markup)
 
 
 @router.message(Command("link"))
@@ -490,6 +516,93 @@ async def cb_rename(callback: CallbackQuery, callback_data: AccountCB, accounts,
     await callback.message.answer(texts.RENAME_PROMPT.format(title=account.title))
 
 
+# ---- wishlist callbacks ----
+
+@router.callback_query(WishlistCB.filter(F.action == "list"))
+async def wl_list(callback: CallbackQuery, wishlist, state: FSMContext):
+    telegram_id = _uid(callback)
+    if telegram_id is None:
+        await callback.answer()
+        return
+    await state.clear()
+    text, markup = wishlist_panel(wishlist, telegram_id)
+    await _edit(callback, text, markup)
+    await callback.answer()
+
+
+@router.callback_query(WishlistCB.filter(F.action == "add"))
+async def wl_add(callback: CallbackQuery, wishlist, state: FSMContext):
+    telegram_id = _uid(callback)
+    if telegram_id is None or callback.message is None:
+        await callback.answer()
+        return
+    if wishlist.at_capacity(telegram_id):
+        await callback.answer(
+            texts.WISHLIST_AT_CAPACITY.format(max=wishlist.max_items),
+            show_alert=True,
+        )
+        return
+    await state.set_state(WishlistFlow.waiting_for_search)
+    await callback.answer()
+    await callback.message.answer(texts.WISHLIST_SEARCH_PROMPT)
+
+
+@router.callback_query(WishlistCB.filter(F.action == "pick"))
+async def wl_pick(callback: CallbackQuery, callback_data: WishlistCB, wishlist,
+                  watcher, state: FSMContext):
+    telegram_id = _uid(callback)
+    if telegram_id is None or callback.message is None:
+        await callback.answer()
+        return
+    name = wishlist.name_for(callback_data.skin_uuid)
+    try:
+        _item, was_new = wishlist.add(telegram_id, callback_data.skin_uuid)
+    except WishlistLimitReached as exc:
+        await callback.answer(explain(exc), show_alert=True)
+        return
+    await state.clear()
+    template = texts.WISHLIST_ADDED if was_new else texts.WISHLIST_ALREADY_ADDED
+    await callback.answer(template.format(name=name))
+
+    # Check right away rather than waiting for the daily sweep — if this skin
+    # is already live, the user should hear about it now, not tomorrow.
+    busy = None
+    try:
+        busy = await callback.message.answer(texts.WISHLIST_CHECKING)
+    except Exception:
+        log.debug("could not send busy notice")
+    try:
+        await watcher.check_user(telegram_id)
+    except Exception:
+        log.exception("immediate wishlist check failed for %s", telegram_id)
+    finally:
+        if busy is not None:
+            try:
+                await busy.delete()
+            except Exception:
+                pass
+
+    text, markup = wishlist_panel(wishlist, telegram_id)
+    await callback.message.answer(text, reply_markup=markup)
+
+
+@router.callback_query(WishlistCB.filter(F.action == "remove"))
+async def wl_remove(callback: CallbackQuery, callback_data: WishlistCB, wishlist):
+    telegram_id = _uid(callback)
+    if telegram_id is None:
+        await callback.answer()
+        return
+    entries = {e.item_id: e for e in wishlist.list_items(telegram_id)}
+    entry = entries.get(callback_data.item_id)
+    wishlist.remove(callback_data.item_id, telegram_id)
+    if entry is not None:
+        await callback.answer(texts.WISHLIST_REMOVED.format(name=entry.name))
+    else:
+        await callback.answer()
+    text, markup = wishlist_panel(wishlist, telegram_id)
+    await _edit(callback, text, markup)
+
+
 # ---- stateful replies ----
 
 @router.message(StateFilter(RenameFlow.waiting_for_name), F.text)
@@ -512,6 +625,19 @@ async def on_rename_reply(message: Message, accounts, state: FSMContext):
     await message.answer(texts.RENAMED.format(label=account.label))
     text, markup = detail_panel(account)
     await message.answer(text, reply_markup=markup)
+
+
+@router.message(StateFilter(WishlistFlow.waiting_for_search), F.text)
+async def on_wishlist_search_reply(message: Message, wishlist):
+    telegram_id = _uid(message)
+    if telegram_id is None:
+        return
+    hits = wishlist.search(message.text or "")
+    if not hits:
+        await message.answer(texts.WISHLIST_NO_MATCHES)
+        return  # stay in the flow: let them retype without tapping Add again
+    await message.answer(texts.WISHLIST_PICK_RESULT,
+                         reply_markup=kb.wishlist_search_results(hits))
 
 
 @router.message(StateFilter(LinkFlow.waiting_for_session), F.text)

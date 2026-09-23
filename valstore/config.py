@@ -79,6 +79,8 @@ class Config:
     link_attempts_per_hour: int
     global_link_attempts_per_hour: int
     link_page_url: str
+    wishlist_poll_interval_seconds: int
+    max_wishlist_items_per_user: int
 
 
 # The in-browser sealing page (docs/, hosted on GitHub Pages). Overridable so a
@@ -101,4 +103,13 @@ def load() -> Config:
             "GLOBAL_LINK_ATTEMPTS_PER_HOUR", 100
         ),
         link_page_url=os.environ.get("LINK_PAGE_URL", DEFAULT_LINK_PAGE_URL),
+        # The shop, Night Market and bundles all rotate at most once a day, and
+        # a wishlist change triggers its own immediate check regardless — so a
+        # daily sweep is enough to catch a rotation nobody was around to see.
+        wishlist_poll_interval_seconds=_int_with_default(
+            "WISHLIST_POLL_INTERVAL_SECONDS", 24 * 3600
+        ),
+        max_wishlist_items_per_user=_int_with_default(
+            "MAX_WISHLIST_ITEMS_PER_USER", 25
+        ),
     )

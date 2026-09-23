@@ -52,6 +52,12 @@ class SessionDecryptError(ValstoreError):
     """The stored cookie could not be decrypted — almost always a changed AT_REST_KEY."""
 
 
+# ---- wishlist ----
+
+class WishlistLimitReached(ValstoreError):
+    """Adding another wishlisted skin would exceed the per-user cap."""
+
+
 # ---- linking ----
 
 class LinkError(ValstoreError):

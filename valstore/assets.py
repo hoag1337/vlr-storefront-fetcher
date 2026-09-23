@@ -181,3 +181,33 @@ class Catalogs:
         self.content_tiers = ContentTierCatalog(cache_dir, ttl)
         self.skin_levels = SkinLevelCatalog(cache_dir, ttl)
         self.skin_names = SkinNameCatalog(cache_dir, ttl)
+
+    def skin_uuid_to_name(self) -> dict:
+        """Skin uuid -> display name, deduplicated across levels.
+
+        skin_levels is keyed by level uuid with several levels sharing one
+        parent skin; this collapses it to the one lookup a wishlist actually
+        needs (by skin, not by level).
+        """
+        return {
+            level["skin_uuid"]: level["skin"]
+            for level in self.skin_levels.load().values()
+        }
+
+    def search_skins(self, query: str, limit: int = 10) -> list:
+        """(skin_uuid, name) pairs whose name contains query, case-insensitive.
+
+        There is no name -> uuid index in the raw catalogs (they're all keyed
+        by uuid), so this builds the search index. valorant-api.com has a
+        few thousand skin levels at most, so a linear scan needs no caching.
+        """
+        needle = query.strip().lower()
+        if not needle:
+            return []
+        hits = [
+            (uuid, name)
+            for uuid, name in self.skin_uuid_to_name().items()
+            if needle in name.lower()
+        ]
+        hits.sort(key=lambda pair: pair[1].lower())
+        return hits[:limit]

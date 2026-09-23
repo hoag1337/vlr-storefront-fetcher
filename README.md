@@ -8,6 +8,9 @@ and removed from the chat while the bot runs; nothing needs a restart.
 - `/store` — today's shop, with Night Market and bundles when they're live
 - `/inventory` — every skin you own at **Premium Edition or above**
   (Premium / Exclusive / Ultra), grouped by tier
+- `/wishlist` — pick skins to watch for; get messaged the moment one turns up
+  in the daily shop, the Night Market, or a featured bundle, on any account
+  you've linked
 - `/accounts` — add, rename, remove, or pick a default account
 - `/help` — the same list, in the chat
 
@@ -95,6 +98,7 @@ valstore/
   rendering.py            payload -> Telegram messages
   riot/                   auth chain, identity, storefront, entitlements
   linking/                LinkMethod + implementations
+  wishlist/               wishlist storage, shop matching, the background watcher
   bot/                    handlers, keyboards, copy, composition root
 tools/seal_ssid.py        one-time linking helper
 tests/                    python -m unittest discover -s tests

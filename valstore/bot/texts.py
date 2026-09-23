@@ -16,6 +16,7 @@ WELCOME = (
 HELP = (
     "🛒 /store — today's shop\n"
     "🎒 /inventory — your skins, Premium Edition and above\n"
+    "🎯 /wishlist — skins to watch for, with an alert when one appears\n"
     "👤 /accounts — add, rename, or remove accounts\n"
     "❓ /help — this message"
 )
@@ -84,6 +85,41 @@ RENAME_EMPTY = "That name was empty, so I kept the old one."
 DEFAULT_SET = "⭐ {title} is now your default account."
 
 NOTHING_TO_CANCEL = "Nothing to cancel."
+
+# ---- wishlist ----
+
+NO_WISHLIST_ITEMS = (
+    "Your wishlist is empty.\n\n"
+    "Add a skin and I'll message you the moment it shows up in the daily "
+    "shop, the Night Market, or a featured bundle — on any account you have "
+    "linked."
+)
+
+WISHLIST_HEADER = (
+    "🎯 Your wishlist ({count})\n\n"
+    "I check once a day, and right away whenever you add a skin."
+)
+
+WISHLIST_SEARCH_PROMPT = (
+    "Type part of a skin name (e.g. \"Reaver\" or \"Vandal\"), or /cancel."
+)
+
+WISHLIST_NO_MATCHES = "No skins matched that. Try a different spelling, or /cancel."
+
+WISHLIST_PICK_RESULT = "Which one?"
+
+WISHLIST_CHECKING = "🔍 Checking your shop now…"
+
+WISHLIST_ADDED = "🎯 Added {name} to your wishlist."
+
+WISHLIST_ALREADY_ADDED = "{name} was already on your wishlist."
+
+WISHLIST_REMOVED = "🗑 Removed {name} from your wishlist."
+
+WISHLIST_AT_CAPACITY = (
+    "You've reached the limit of {max} wishlisted skins. Remove one first "
+    "and you can add another."
+)
 
 # ---- failures ----
 

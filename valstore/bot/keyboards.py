@@ -23,6 +23,14 @@ class LinkCB(CallbackData, prefix="lnk"):
     method: str
 
 
+class WishlistCB(CallbackData, prefix="wl"):
+    """Actions on the wishlist. item_id/skin_uuid are set only where needed."""
+
+    action: str
+    item_id: int = 0
+    skin_uuid: str = ""
+
+
 def accounts_list(accounts, at_capacity: bool) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for account in accounts:
@@ -101,6 +109,34 @@ def link_methods(registry) -> InlineKeyboardMarkup:
     for method in registry:
         builder.button(text=method.title, callback_data=LinkCB(method=method.id))
     builder.button(text="Cancel", callback_data=AccountCB(action="list"))
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def wishlist_panel(entries, at_capacity: bool) -> InlineKeyboardMarkup:
+    """entries: WishlistService.list_items() output. Tapping a row removes it —
+    the action is cheap and reversible, so it needs no confirm step."""
+    builder = InlineKeyboardBuilder()
+    for entry in entries:
+        builder.button(
+            text=f"🗑 {entry.name}",
+            callback_data=WishlistCB(action="remove", item_id=entry.item_id),
+        )
+    if not at_capacity:
+        builder.button(text="➕ Add a skin", callback_data=WishlistCB(action="add"))
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def wishlist_search_results(hits) -> InlineKeyboardMarkup:
+    """hits: (skin_uuid, name) pairs from WishlistService.search()."""
+    builder = InlineKeyboardBuilder()
+    for skin_uuid, name in hits:
+        builder.button(
+            text=name,
+            callback_data=WishlistCB(action="pick", skin_uuid=skin_uuid),
+        )
+    builder.button(text="Cancel", callback_data=WishlistCB(action="list"))
     builder.adjust(1)
     return builder.as_markup()
 
