@@ -42,9 +42,11 @@ class SealedPasteTest(unittest.TestCase):
             self.method.complete(1, blob)
         self.assertIn("session cookie", str(caught.exception))
 
-    def test_start_explains_itself_without_jargon(self):
-        challenge = self.method.start(1)
-        self.assertTrue(challenge.instructions)
+    def test_start_points_at_the_sealing_page(self):
+        method = SealedPasteLinkMethod(self.private, "https://example.test/link/")
+        challenge = method.start(1)
+        self.assertIn("https://example.test/link/", challenge.instructions)
+        # The terminal helper is still mentioned as the fallback.
         self.assertIn("seal_ssid.py", challenge.instructions)
 
 

@@ -78,6 +78,12 @@ class Config:
     max_accounts_per_user: int
     link_attempts_per_hour: int
     global_link_attempts_per_hour: int
+    link_page_url: str
+
+
+# The in-browser sealing page (docs/, hosted on GitHub Pages). Overridable so a
+# fork can host it elsewhere without touching code.
+DEFAULT_LINK_PAGE_URL = "https://hoag1337.github.io/vlr-storefront-fetcher/"
 
 
 def load() -> Config:
@@ -94,4 +100,5 @@ def load() -> Config:
         global_link_attempts_per_hour=_int_with_default(
             "GLOBAL_LINK_ATTEMPTS_PER_HOUR", 100
         ),
+        link_page_url=os.environ.get("LINK_PAGE_URL", DEFAULT_LINK_PAGE_URL),
     )

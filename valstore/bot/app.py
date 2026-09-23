@@ -46,7 +46,7 @@ def build_dispatcher(cfg) -> Dispatcher:
     dispatcher["store_command"] = StoreCommand(catalogs)
     dispatcher["inventory_command"] = InventoryCommand(catalogs)
     dispatcher["registry"] = LinkMethodRegistry([
-        SealedPasteLinkMethod(cfg.bot_private_key_b64),
+        SealedPasteLinkMethod(cfg.bot_private_key_b64, cfg.link_page_url),
     ])
     dispatcher["guard"] = LinkGuard(
         per_user_per_hour=cfg.link_attempts_per_hour,

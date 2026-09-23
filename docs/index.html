@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Link your Valorant account</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #1c1f24;
+    --muted: #5b6470;
+    --line: #e2e5ea;
+    --brand: #ff4655;      /* Valorant red */
+    --brand-ink: #ffffff;
+    --ok: #1f9d57;
+    --warn-bg: #fff7e6;
+    --warn-ink: #7a5200;
+    --code-bg: #f0f2f5;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216;
+      --card: #171b21;
+      --ink: #e8eaed;
+      --muted: #9aa4b1;
+      --line: #262c34;
+      --brand: #ff4655;
+      --brand-ink: #ffffff;
+      --ok: #46d18a;
+      --warn-bg: #2a2210;
+      --warn-ink: #f0c657;
+      --code-bg: #0c0f13;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: max(16px, env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { text-align: center; margin: 8px 0 20px; }
+  header h1 { font-size: 22px; margin: 0 0 6px; }
+  header p { color: var(--muted); margin: 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--brand); color: var(--brand-ink);
+    font-weight: 700; font-size: 14px; margin-right: 9px; flex: none;
+  }
+  .step-head { display: flex; align-items: center; margin: 0 0 10px; font-size: 17px; font-weight: 650; }
+  .card p { margin: 8px 0; }
+  .muted { color: var(--muted); }
+  a { color: var(--brand); }
+  .btn {
+    display: inline-block; border: none; cursor: pointer;
+    background: var(--brand); color: var(--brand-ink);
+    font: inherit; font-weight: 650;
+    padding: 11px 16px; border-radius: 10px; text-decoration: none;
+    text-align: center;
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: var(--brand); border: 1px solid var(--brand); }
+  .btn.full { display: block; width: 100%; }
+  .tabs { display: flex; gap: 6px; margin: 4px 0 12px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: transparent; color: var(--muted); cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .tab[aria-selected="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  ol.steps { margin: 6px 0 0; padding-left: 20px; }
+  ol.steps li { margin: 7px 0; }
+  kbd {
+    background: var(--code-bg); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 5px; padding: 1px 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+  }
+  code.inline { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical;
+    background: var(--code-bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5;
+  }
+  textarea:focus, .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .warn {
+    background: var(--warn-bg); color: var(--warn-ink);
+    border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin: 12px 0 0;
+  }
+  .safe {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: color-mix(in srgb, var(--ok) 12%, transparent);
+    border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 16px;
+  }
+  .safe b { color: var(--ok); }
+  .result { margin-top: 12px; }
+  .result[hidden] { display: none; }
+  .out {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 11px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px;
+    word-break: break-all; max-height: 130px; overflow: auto;
+  }
+  .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 160px; }
+  .err { color: var(--brand); font-size: 13.5px; margin-top: 8px; min-height: 1px; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
+  details .body { margin-top: 8px; }
+  input.key {
+    width: 100%; margin-top: 6px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--code-bg); color: var(--ink);
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+  }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Link your Valorant account</h1>
+    <p>One-time setup on a computer. Takes about a minute.</p>
+  </header>
+
+  <div class="safe">
+    <span aria-hidden="true">🔒</span>
+    <div><b>This page never sends anything anywhere.</b> Your session is locked
+      to the bot right here in your browser. You could turn off your internet
+      after this page loads and it would still work.</div>
+  </div>
+
+  <!-- Step 1 -->
+  <section class="card">
+    <h2 class="step-head"><span class="step-num">1</span>Sign in to Riot</h2>
+    <p>Open the Riot sign-in page and log in with your Valorant account.</p>
+    <a class="btn" href="https://auth.riotgames.com/login" target="_blank" rel="noopener">
+      Open Riot sign-in ↗</a>
+    <p class="muted" style="margin-top:10px">Keep that tab open and come back here.</p>
+  </section>
+
+  <!-- Step 2 -->
+  <section class="card">
+    <h2 class="step-head"><span class="step-num">2</span>Copy your session value</h2>
+    <p>Pick your browser and follow the steps to copy one value called
+      <code class="inline">ssid</code>.</p>
+    <div class="tabs" role="tablist" aria-label="Browser">
+      <button class="tab" role="tab" aria-selected="true" data-tab="chrome">Chrome / Edge</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="firefox">Firefox</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="safari">Safari</button>
+    </div>
+
+    <div data-panel="chrome">
+      <ol class="steps">
+        <li>On the Riot tab, press <kbd>F12</kbd> to open developer tools.</li>
+        <li>Click the <b>Application</b> tab up top (you may need the <kbd>»</kbd> arrow to find it).</li>
+        <li>On the left, open <b>Cookies</b> → <b>https://auth.riotgames.com</b>.</li>
+        <li>Find the row named <code class="inline">ssid</code> and click it.</li>
+        <li>The full value appears in the panel below — right-click it → <b>Copy value</b>
+          (or select it all and <kbd>Ctrl</kbd>+<kbd>C</kbd>).</li>
+      </ol>
+    </div>
+    <div data-panel="firefox" hidden>
+      <ol class="steps">
+        <li>On the Riot tab, press <kbd>F12</kbd>.</li>
+        <li>Click the <b>Storage</b> tab (use <kbd>»</kbd> if it's hidden).</li>
+        <li>Open <b>Cookies</b> → <b>https://auth.riotgames.com</b>.</li>
+        <li>Find the <code class="inline">ssid</code> row and <b>double-click its Value cell</b>.</li>
+        <li>Select it all and press <kbd>Ctrl</kbd>+<kbd>C</kbd>.</li>
+      </ol>
+    </div>
+    <div data-panel="safari" hidden>
+      <ol class="steps">
+        <li>Enable the Develop menu once: <b>Safari → Settings → Advanced →</b>
+          tick <b>“Show features for web developers”</b>.</li>
+        <li>On the Riot tab, press <kbd>⌥</kbd>+<kbd>⌘</kbd>+<kbd>I</kbd>.</li>
+        <li>Open the <b>Storage</b> tab → <b>Cookies</b> → <b>auth.riotgames.com</b>.</li>
+        <li>Click the <code class="inline">ssid</code> row and copy its value.</li>
+      </ol>
+    </div>
+    <p class="warn">The <code class="inline">ssid</code> value is long and looks
+      like random letters. That's correct — copy the whole thing.</p>
+  </section>
+
+  <!-- Step 3 -->
+  <section class="card">
+    <h2 class="step-head"><span class="step-num">3</span>Paste it here</h2>
+    <p class="muted">Paste the <code class="inline">ssid</code> value you copied.
+      If you grabbed the whole cookie line, that's fine too.</p>
+    <textarea id="cookie" placeholder="Paste the ssid value here…" spellcheck="false"
+      autocapitalize="off" autocomplete="off"></textarea>
+    <button class="btn full" id="seal" style="margin-top:12px" disabled>Lock it to the bot</button>
+    <div class="err" id="err" role="alert"></div>
+
+    <div class="result" id="result" hidden>
+      <p style="margin-top:16px"><b>Done.</b> Copy this line and send it to the bot on Telegram:</p>
+      <div class="out" id="blob"></div>
+      <div class="row">
+        <button class="btn" id="copy">Copy the line</button>
+        <a class="btn secondary" id="tg" href="#" target="_blank" rel="noopener">Open the bot ↗</a>
+      </div>
+      <p class="warn" style="margin-top:12px">After you send it, <b>delete that
+        message</b> in the chat. The bot will remind you too.</p>
+    </div>
+
+    <details>
+      <summary>Advanced: change the bot key</summary>
+      <div class="body">
+        <p class="muted">Only needed if the bot owner regenerated its keys and
+          gave you a new public key.</p>
+        <input class="key" id="pubkey" spellcheck="false" autocapitalize="off" autocomplete="off">
+      </div>
+    </details>
+  </section>
+
+  <footer>
+    Runs entirely in your browser · nothing is uploaded ·
+    <a href="https://github.com/hoag1337/vlr-storefront-fetcher" target="_blank" rel="noopener">source</a>
+  </footer>
+</div>
+
+<!-- tweetnacl (curve25519 box), served locally — no CDN, no network -->
+<script src="vendor/nacl.min.js"></script>
+<script type="module">
+  import { sealToBase64 } from "./vendor/seal.js";
+
+  // Baked-in bot public key. Safe to publish — it can only ENCRYPT to the bot,
+  // never decrypt. Overridable in the Advanced box.
+  const DEFAULT_PUBKEY = "5b8ntrCMjisTKIbq8DNeNZg21Imn7mOn6nRTPeAxux8=";
+  const BOT_USERNAME = "vlr_shop_fetcher_bot";
+
+  const $ = (id) => document.getElementById(id);
+  const cookieEl = $("cookie"), sealBtn = $("seal"), errEl = $("err");
+  const resultEl = $("result"), blobEl = $("blob"), copyBtn = $("copy");
+  const tgLink = $("tg"), pubkeyEl = $("pubkey");
+  pubkeyEl.value = DEFAULT_PUBKEY;
+
+  // Browser tabs for the per-browser instructions.
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) =>
+        t.setAttribute("aria-selected", String(t === tab)));
+      document.querySelectorAll("[data-panel]").forEach((p) =>
+        p.hidden = p.dataset.panel !== tab.dataset.tab);
+    });
+  });
+
+  const setError = (msg) => { errEl.textContent = msg || ""; };
+
+  // Accept a bare ssid value OR a full "ssid=...; clid=..." header. The bot's
+  // chain wants a cookie header, so a bare value is wrapped; a header is kept.
+  function toCookieHeader(raw) {
+    let text = raw.trim();
+    if (!text) return null;
+    if (/^cookie:/i.test(text)) text = text.replace(/^cookie:\s*/i, "");
+    if (/(^|;)\s*ssid=/i.test(text)) return text;          // already a header
+    if (/\s/.test(text)) return null;                       // spaces but no ssid= — unclear
+    return "ssid=" + text;                                  // a lone value
+  }
+
+  const refresh = () => { sealBtn.disabled = !cookieEl.value.trim(); setError(""); };
+  cookieEl.addEventListener("input", refresh);
+
+  sealBtn.addEventListener("click", () => {
+    setError("");
+    resultEl.hidden = true;
+    const header = toCookieHeader(cookieEl.value);
+    if (!header) {
+      setError("That doesn't look like an ssid value. Copy the ssid row again — the whole value.");
+      return;
+    }
+    if (header.replace(/^ssid=/i, "").length < 20) {
+      setError("That value looks too short to be a real session. Copy the full ssid value.");
+      return;
+    }
+    let blob;
+    try {
+      blob = sealToBase64(header, pubkeyEl.value, window.nacl);
+    } catch (e) {
+      setError(e.message || "Something went wrong locking the value.");
+      return;
+    }
+    const line = "/link " + blob;
+    blobEl.textContent = line;
+    tgLink.href = "https://t.me/" + BOT_USERNAME;
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(blobEl.textContent);
+      copyBtn.textContent = "Copied ✓";
+      setTimeout(() => (copyBtn.textContent = "Copy the line"), 1600);
+    } catch {
+      // Clipboard API can be blocked; fall back to selecting the text.
+      const range = document.createRange();
+      range.selectNodeContents(blobEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      copyBtn.textContent = "Select all + copy";
+    }
+  });
+
+  refresh();
+</script>
+</body>
+</html>

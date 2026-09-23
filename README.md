@@ -43,24 +43,35 @@ bans.
 
 ## Linking an account
 
-Send `/start` and tap **Link an account**; the bot walks you through whichever
-method is enabled.
+Send `/start` and tap **Link an account**. The bot sends a link to the sealing
+page (`docs/`, hosted on GitHub Pages). On a computer the friend:
 
-Today that is the sealed-paste method, which needs a computer once:
+1. signs in to Riot,
+2. copies one cookie value (`ssid`) — the page shows how, per browser,
+3. pastes it into the page, which **seals it in the browser** and prints a
+   `/link …` line,
+4. sends that line back to the bot.
 
-```
-python tools/seal_ssid.py --pubkey <BOT_PUBLIC_KEY>
-```
+The page never uploads anything: the cookie is encrypted to the bot's public key
+entirely client-side (proven byte-compatible with `valstore.crypto.unseal`), so
+the plaintext session never leaves the friend's machine. `tools/seal_ssid.py`
+does the same thing from a terminal for anyone who prefers it.
 
-Paste your Riot cookie when prompted, then send the bot the line it prints. It
-is already encrypted to the bot, so nobody in between can read it. Delete the
-message afterwards anyway.
+> **Why a computer is needed once.** Riot now requires an hCaptcha token on its
+> password endpoint, Riot Mobile (the QR flow) isn't available in every region,
+> and the session cookie is `HttpOnly` — so no phone page, Mini App, or bookmark
+> can read it. Extracting it needs a desktop browser's dev tools once; after
+> that, daily use is entirely on the phone. The QR flow is spiked in
+> `tools/spike_qr_login.py` for regions where Riot Mobile exists.
 
-> **Why it still asks for a cookie.** Riot now requires an hCaptcha token on its
-> password endpoint and recommends against direct username/password auth, and the
-> session cookie is `HttpOnly` — so no web page or Mini App can read it. A
-> friendlier method plugs in as another `LinkMethod` without touching anything
-> else; see `valstore/linking/`.
+### Hosting the sealing page
+
+The `docs/` folder is a self-contained static site. Enable GitHub Pages
+(Settings → Pages → deploy from `main`/`docs`) and point `LINK_PAGE_URL` at the
+result. It has no build step and no runtime network calls; the two vendored
+crypto libraries (`tweetnacl`, `blakejs`) are served from `docs/vendor/`. The
+bot's public key is baked into `docs/index.html` — update it there if you ever
+run `gen_keys.py` again.
 
 ## Running 24/7 (Windows home PC)
 
