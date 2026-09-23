@@ -4,7 +4,7 @@ paste to the bot. The plaintext cookie never leaves your machine.
 
 1. Log in at https://auth.riotgames.com/ (incognito), then from DevTools ->
    Application -> Cookies copy at least the ssid (and clid) values.
-2. Run:  python seal_ssid.py --pubkey <BOT_PUBLIC_KEY>
+2. Run:  python tools/seal_ssid.py --pubkey <BOT_PUBLIC_KEY>
    Paste the cookie when prompted (hidden input).
 3. Copy the printed blob and send:  /link <blob>   to the bot.
 4. Delete your /link message afterward.
@@ -12,8 +12,14 @@ paste to the bot. The plaintext cookie never leaves your machine.
 
 import argparse
 import getpass
+import sys
+from pathlib import Path
 
-import crypto_util as cu
+# Run directly from a clone (`python tools/seal_ssid.py`), so the project root
+# has to be importable before valstore resolves.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from valstore import crypto as cu
 
 
 def main():
@@ -34,3 +40,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

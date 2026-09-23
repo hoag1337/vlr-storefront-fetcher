@@ -2,7 +2,7 @@
 then prints the env lines to paste into your .env. Keep the private key and
 at-rest key secret; share only the PUBLIC key (it goes into seal_ssid.py)."""
 
-import crypto_util as cu
+from valstore import crypto as cu
 
 priv, pub = cu.generate_keypair()
 fernet = cu.generate_fernet_key()
